@@ -65,3 +65,6 @@ __pycache__/
 
 # Release history is kept locally.
 /CHANGELOG.md
+
+# Linux build output
+/linux/build/

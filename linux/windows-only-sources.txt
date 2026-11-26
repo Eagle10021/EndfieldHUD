@@ -1,0 +1,7 @@
+# Upstream sources that do not compile on Linux (paths relative to windows/).
+native/media_assembly_gpu.cpp
+native/notes_clipboard.cpp
+native/notes_text_navigation.cpp
+native/renderer.cpp
+native/source_cursor.cpp
+native/source_graphics.cpp
