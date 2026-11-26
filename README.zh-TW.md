@@ -1,3 +1,8 @@
+> [!NOTE]
+> **這是一個分支（fork）。** EndfieldHUD 由 [DDDuoDuo](https://github.com/DDDuoDuo) 製作。原專案及官方 macOS、Windows 應用程式見 **[DDDuoDuo/EndfieldHUD](https://github.com/DDDuoDuo/EndfieldHUD)**（[發行頁面](https://github.com/DDDuoDuo/EndfieldHUD/releases)）。下方的下載連結皆指向原專案。
+>
+> [`linux` 分支](https://github.com/Eagle10021/EndfieldHUD/tree/linux)加入了適用於 KDE Plasma 的非官方原生 Linux 移植版，仍在開發中：可用 Ctrl+Tab 開啟主畫面，其中的各個模組尚未移植（[進度與建置步驟（英文）](https://github.com/Eagle10021/EndfieldHUD/blob/linux/linux/PORTING.md)）。請勿向原作者回報 Linux 移植版的問題。
+
 <a href="https://github.com/DDDuoDuo/EndfieldHUD/releases/tag/v1.3.1"><img src="docs/media/readme/panels/hero.zh-tw.png" alt="ENDFIELD HUD：適用於 Mac 和 Windows 的桌面 HUD，v1.3.1" width="100%"></a>
 
 <p align="center">

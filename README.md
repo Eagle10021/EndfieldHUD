@@ -1,3 +1,8 @@
+> [!NOTE]
+> **This is a fork.** EndfieldHUD is made by [DDDuoDuo](https://github.com/DDDuoDuo). The original project, with the official macOS and Windows app, is at **[DDDuoDuo/EndfieldHUD](https://github.com/DDDuoDuo/EndfieldHUD)** ([releases](https://github.com/DDDuoDuo/EndfieldHUD/releases)). The download links below lead there.
+>
+> The [`linux` branch](https://github.com/Eagle10021/EndfieldHUD/tree/linux) adds an unofficial native Linux port for KDE Plasma that is still in progress: the main screen opens with Ctrl+Tab, and the modules inside it are not ported yet ([status and build steps](https://github.com/Eagle10021/EndfieldHUD/blob/linux/linux/PORTING.md)). Please do not report Linux port problems to the original author.
+
 <a href="https://github.com/DDDuoDuo/EndfieldHUD/releases/tag/v1.3.1"><img src="docs/media/readme/panels/hero.png" alt="ENDFIELD HUD: a desktop HUD for Mac &amp; Windows, v1.3.1" width="100%"></a>
 
 <p align="center">

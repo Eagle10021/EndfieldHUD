@@ -1,3 +1,8 @@
+> [!NOTE]
+> **このリポジトリはフォークです。** EndfieldHUD の作者は [DDDuoDuo](https://github.com/DDDuoDuo) さんです。オリジナルのプロジェクトと公式の macOS・Windows アプリは **[DDDuoDuo/EndfieldHUD](https://github.com/DDDuoDuo/EndfieldHUD)**（[リリース](https://github.com/DDDuoDuo/EndfieldHUD/releases)）にあります。以下のダウンロードリンクはオリジナルを指しています。
+>
+> [`linux` ブランチ](https://github.com/Eagle10021/EndfieldHUD/tree/linux)には KDE Plasma 向けの非公式ネイティブ Linux 移植版があります。開発中で、Ctrl+Tab でメイン画面を開けますが、中の各モジュールはまだ移植されていません（[進捗とビルド手順（英語）](https://github.com/Eagle10021/EndfieldHUD/blob/linux/linux/PORTING.md)）。Linux 移植版の不具合をオリジナルの作者に報告しないでください。
+
 <a href="https://github.com/DDDuoDuo/EndfieldHUD/releases/tag/v1.3.1"><img src="docs/media/readme/panels/hero.ja.png" alt="ENDFIELD HUD：Mac と Windows のためのデスクトップ HUD、v1.3.1" width="100%"></a>
 
 <p align="center">

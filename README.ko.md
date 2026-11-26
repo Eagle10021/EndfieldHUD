@@ -1,3 +1,8 @@
+> [!NOTE]
+> **이 저장소는 포크입니다.** EndfieldHUD는 [DDDuoDuo](https://github.com/DDDuoDuo)가 만들었습니다. 원본 프로젝트와 공식 macOS 및 Windows 앱은 **[DDDuoDuo/EndfieldHUD](https://github.com/DDDuoDuo/EndfieldHUD)**([릴리스](https://github.com/DDDuoDuo/EndfieldHUD/releases))에 있습니다. 아래의 다운로드 링크는 원본으로 연결됩니다.
+>
+> [`linux` 브랜치](https://github.com/Eagle10021/EndfieldHUD/tree/linux)에는 KDE Plasma용 비공식 네이티브 Linux 포트가 있습니다. 아직 개발 중이며 Ctrl+Tab으로 메인 화면을 열 수 있지만, 그 안의 모듈은 아직 이식되지 않았습니다([진행 상황 및 빌드 방법(영어)](https://github.com/Eagle10021/EndfieldHUD/blob/linux/linux/PORTING.md)). Linux 포트의 문제는 원작자에게 제보하지 마세요.
+
 <a href="https://github.com/DDDuoDuo/EndfieldHUD/releases/tag/v1.3.1"><img src="docs/media/readme/panels/hero.ko.png" alt="ENDFIELD HUD: Mac과 Windows용 데스크톱 HUD, v1.3.1" width="100%"></a>
 
 <p align="center">

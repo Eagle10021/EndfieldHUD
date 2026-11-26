@@ -1,9 +1,12 @@
 // OpenGL 4.5 implementation of endfield::native::Renderer (windows/native/renderer.hpp).
-// Offscreen target only so far. Draw validation, the object uniform layout and the texture
+// Draws offscreen, or into the context of a linux_port::GraphicsHost passed as the window.
+// Draw validation, the object uniform layout and the texture
 // conversions come from the Direct3D renderer through the generated include below.
-// Not implemented: composition surfaces, media textures, worker textures, content filter,
-// source material pass and device suspension.
+// Not implemented: composition surfaces, media textures, worker textures, content filter
+// and device suspension. The original material pass is in source_graphics_gl.cpp.
 #include "renderer_logic.cpp"
+#include "native/source_graphics.hpp"
+#include "graphics_host.hpp"
 
 #include <epoxy/egl.h>
 #include <epoxy/gl.h>
@@ -136,6 +139,7 @@ struct Renderer::Impl {
         ~Group() { if (framebuffer) glDeleteFramebuffers(1, &framebuffer); if (camera) glDeleteBuffers(1, &camera); }
     };
 
+    linux_port::GraphicsHost* host{}; // owns the context when set
     EGLDisplay display{EGL_NO_DISPLAY};
     EGLContext context{EGL_NO_CONTEXT};
     std::uint32_t width{}, height{};
@@ -150,8 +154,13 @@ struct Renderer::Impl {
     std::vector<std::weak_ptr<RendererParkedTexture::Impl>> parked;
     bool readbackReady{};
     RendererStats counters;
+    std::unique_ptr<SourceGraphics> source;
+    bool sourcePassEnabled{true};
 
-    void current() const { require(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context) == EGL_TRUE, "Activate graphics context"); }
+    void current() const {
+        if (host) host->makeCurrent();
+        else require(eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context) == EGL_TRUE, "Activate graphics context");
+    }
 
     void createContext() {
         // The extension entry point is used because core EGL 1.5 functions cannot be resolved before a display exists.
@@ -350,11 +359,17 @@ struct Renderer::Impl {
     }
 
     ~Impl() {
-        if (context == EGL_NO_CONTEXT) return;
-        eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context);
-        draws.clear(); groups.clear(); meshes.clear(); textures.clear(); white = Texture{};
+        if (!host && context == EGL_NO_CONTEXT) return;
+        if (host) host->makeCurrent(); else eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, context);
+        source.reset(); draws.clear(); groups.clear(); meshes.clear(); textures.clear(); white = Texture{};
         for (GLuint p : scene) if (p) glDeleteProgram(p);
         if (composite) glDeleteProgram(composite);
+        const GLuint samplers[2]{sampleLinear, sampleNearest}; glDeleteSamplers(2, samplers);
+        const GLuint buffers[2]{cameraBuffer, objectBuffer}; glDeleteBuffers(2, buffers);
+        const GLuint framebuffers[2]{linearFramebuffer, outputFramebuffer}; glDeleteFramebuffers(2, framebuffers);
+        const GLuint targets[2]{linearTexture, outputTexture}; glDeleteTextures(2, targets);
+        glDeleteVertexArrays(1, &emptyArray);
+        if (host) return;
         eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         eglDestroyContext(display, context);
     }
@@ -365,10 +380,11 @@ Renderer::~Renderer() = default;
 bool Renderer::shadersEmbedded() noexcept { return false; }
 
 void Renderer::initialize(void* window, std::uint32_t width, std::uint32_t height, const RendererOptions& options) {
-    require(options.target == RenderTarget::offscreenForTests && window == nullptr, "Only the offscreen target is implemented");
+    require(window ? options.target == RenderTarget::composition : options.target == RenderTarget::offscreenForTests, "A window needs the composition target");
     dimensions(width, height);
     auto next = std::make_unique<Impl>();
-    next->createContext();
+    next->host = static_cast<linux_port::GraphicsHost*>(window);
+    if (next->host) next->current(); else next->createContext();
     require(epoxy_gl_version() >= 45, "OpenGL 4.5 is required");
     glClipControl(GL_UPPER_LEFT, GL_ZERO_TO_ONE); // Direct3D's top-left rows and 0..1 depth
     glDisable(GL_CULL_FACE); glDisable(GL_DEPTH_TEST); glDisable(GL_FRAMEBUFFER_SRGB);
@@ -557,7 +573,17 @@ void Renderer::setCamera(const core::Matrix4& viewProjection) {
 
 void Renderer::draw(bool present) {
     require(impl_ != nullptr, "Renderer is not initialized"); auto& r = *impl_; r.current();
-    require(!present, "An isolated render target cannot present to the desktop");
+    require(!present || r.host, "An isolated render target cannot present to the desktop");
+    // The original materials fill the output first; the native surface is composed over them.
+    const bool originalBackground = r.sourcePassEnabled && r.source && r.source->active();
+    if (originalBackground) {
+        r.source->renderTo(&r.outputTexture, r.width, r.height);
+        if (r.draws.empty()) {
+            require(glGetError() == GL_NO_ERROR, "OpenGL reported an error while drawing"); r.readbackReady = true;
+            if (present) r.host->present(r.outputTexture, r.width, r.height);
+            return;
+        }
+    }
     for (auto& [id, g] : r.groups) g->visible = false;
     const auto expose = [](const Impl::Draw& d) {
         if (d.values.opacity <= 0 || d.values.tint[3] <= 0) return;
@@ -577,11 +603,13 @@ void Renderer::draw(bool present) {
         }
     r.render(r.draws, r.linearFramebuffer, r.cameraBuffer, r.width, r.height, false);
     // Linear premultiplied composition converted to encoded premultiplied output.
-    glBindFramebuffer(GL_FRAMEBUFFER, r.outputFramebuffer); glViewport(0, 0, r.width, r.height); glDisable(GL_BLEND);
+    glBindFramebuffer(GL_FRAMEBUFFER, r.outputFramebuffer); glViewport(0, 0, r.width, r.height);
+    if (originalBackground) { glEnable(GL_BLEND); glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); } else glDisable(GL_BLEND);
     glUseProgram(r.composite); glBindTextureUnit(0, r.linearTexture); glBindSampler(0, r.sampleNearest);
     glBindVertexArray(r.emptyArray); glDrawArrays(GL_TRIANGLES, 0, 3);
     require(glGetError() == GL_NO_ERROR, "OpenGL reported an error while drawing");
     r.readbackReady = true;
+    if (present) r.host->present(r.outputTexture, r.width, r.height);
 }
 
 Readback Renderer::readback() {
@@ -597,9 +625,25 @@ Readback Renderer::readback() {
 void Renderer::clearDrawList() { if (impl_) { impl_->draws.clear(); impl_->readbackReady = false; } }
 void Renderer::clearResources() {
     if (!impl_) return; auto& r = *impl_; r.current();
+    if (r.source) r.source->clear();
     r.draws.clear(); r.groups.clear(); r.meshes.clear(); r.textures.clear(); r.parked.clear(); r.counters.resourceBytes = 0; r.readbackReady = false;
 }
 void Renderer::reset() noexcept { impl_.reset(); }
+SourceGraphics& Renderer::sourceGraphics() {
+    require(impl_ != nullptr, "Renderer is not initialized"); impl_->current();
+    if (!impl_->source) impl_->source = std::make_unique<SourceGraphics>(impl_.get(), impl_.get());
+    impl_->readbackReady = false;
+    return *impl_->source;
+}
+SourceGraphicsStats Renderer::sourceGraphicsStats() const {
+    return impl_ && impl_->source ? impl_->source->stats() : SourceGraphicsStats{};
+}
+bool Renderer::setSourcePassEnabled(bool enabled) {
+    require(impl_ != nullptr, "Renderer is not initialized");
+    if (impl_->sourcePassEnabled == enabled) return false;
+    impl_->sourcePassEnabled = enabled; impl_->readbackReady = false; return true;
+}
+bool Renderer::sourcePassEnabled() const noexcept { return !impl_ || impl_->sourcePassEnabled; }
 RendererStats Renderer::stats() const noexcept {
     if (!impl_) return {};
     auto s = impl_->counters; s.meshes = impl_->meshes.size(); s.textures = impl_->textures.size(); s.objects = impl_->draws.size();

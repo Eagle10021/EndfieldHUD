@@ -6,6 +6,26 @@ upstream because they are copied from it at build time. Usage: extract_renderer_
 """
 import sys
 
+if sys.argv[1] == "--unguard":
+    text = open(sys.argv[2], encoding="utf-8").read()
+    assert "#ifdef _WIN32\n" in text, "expected a Windows guard in " + sys.argv[2]
+    open(sys.argv[3], "w", encoding="utf-8").write("// Generated from " + sys.argv[2].rsplit("/windows/", 1)[-1] + ". Do not edit.\n" + text.replace("#ifdef _WIN32\n", "#if 1\n"))
+    raise SystemExit(0)
+
+if sys.argv[1] == "--source-scene":
+    text = open(sys.argv[2], encoding="utf-8").read()
+    parts = text.split("#ifdef _WIN32\n    ")
+    assert len(parts) == 3 and text.count("requires native Windows graphics") == 2, "source_scene.cpp changed"
+    open(sys.argv[3], "w", encoding="utf-8").write("// Generated from windows/native/source_scene.cpp. Do not edit.\n" + "#if 1\n    ".join(parts))
+    raise SystemExit(0)
+
+if sys.argv[1] == "--raster-relief":
+    lines = open(sys.argv[2], encoding="utf-8").read().split("\n")
+    first = next(i for i, l in enumerate(lines) if l.startswith("namespace {thread_local std::string_view rasterAttribution;}"))
+    end = next(i for i, l in enumerate(lines) if l.startswith("LayerRasterStats LayerRasterizer::stats()"))
+    open(sys.argv[3], "w", encoding="utf-8").write("// Generated from windows/native/layer_raster.cpp. Do not edit.\n" + "\n".join(lines[first:end]) + "\n")
+    raise SystemExit(0)
+
 source, output = sys.argv[1:3]
 lines = open(source, encoding="utf-8").read().split("\n")
 

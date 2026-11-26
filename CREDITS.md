@@ -2,6 +2,8 @@
 
 EndfieldHUD is an unofficial fan project by [DDDuoDuo](https://github.com/DDDuoDuo). [Bilibili](https://space.bilibili.com/223936961)
 
+The original repository is [DDDuoDuo/EndfieldHUD](https://github.com/DDDuoDuo/EndfieldHUD). The Linux port in [`linux/`](linux/PORTING.md) is an unofficial addition in a [fork](https://github.com/Eagle10021/EndfieldHUD), built on the original sources.
+
 ## Visual inspiration
 
 - *Arknights: Endfield* supplies the HUD's visual reference, including the Watch menu, motion, typography and Photo Mode.
